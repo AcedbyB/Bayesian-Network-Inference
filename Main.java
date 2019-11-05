@@ -1,16 +1,15 @@
-import base.BooleanDomain;
-import base.BooleanValue;
-import base.NamedVariable;
+import base.*;
 import core.*;
+import core.Assignment;
+import core.BayesianNetwork;
+import core.Distribution;
+import core.Value;
 import org.xml.sax.SAXException;
 import parser.XMLBIFParser;
-import util.ArraySet;
 
-import javax.lang.model.element.VariableElement;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.Scanner;
-import java.util.Set;
 
 public class Main {
 
@@ -24,7 +23,7 @@ public class Main {
         while (cnt < args.length) {
             RandomVariable variable = bn.getVariableByName(args[cnt]);
             cnt++;
-            Value value = ((base.Domain)variable.getDomain()).getValueByString(args[cnt++]);
+            Value value = ((base.Domain) variable.getDomain()).getValueByString(args[cnt++]);
             e.put(variable, value);
         }
 
@@ -34,18 +33,26 @@ public class Main {
         System.out.println("3.Likelihood Weighting");
         System.out.println("4.Gibbs Sampling");
         int a = sc.nextInt();
-        if(a == 1) {
+        Distribution dist;
+        if (a == 1) {
+            EnumerationInferencer inferencer = new EnumerationInferencer();
+            dist = inferencer.query(queryVariable, e, bn);
 
         } else {
             System.out.println("Enter the number of sample: ");
-            a = sc.nextInt();
+            int numSample = sc.nextInt();
+            if (a == 2) {
+                RejectionSampling rs = new RejectionSampling();
+                dist = rs.query(queryVariable, e, bn, numSample);
+            } else if (a == 3) {
+                LikelihoodWeighting lw = new LikelihoodWeighting();
+                dist = lw.query(queryVariable, e, bn, numSample);
+            } else {
+                GibbsSampling gibb = new GibbsSampling();
+                dist = gibb.query(queryVariable, e, bn, numSample);
+            }
         }
-//        Inferencer exact = new base.EnumerationInferencer();
-//        a = new base.Assignment();
-//        a.put(J, TRUE);
-//        a.put(M, TRUE);
-//        Distribution dist = exact.query(B, a, bn);
-//        System.out.println(dist);
+        System.out.println(dist);
     }
 
 }
